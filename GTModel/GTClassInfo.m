@@ -26,12 +26,12 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
                 qualifier |= GTEncodingTypeQualifierIn;
                 type++;
             } break;
-            
+                
             case 'N':{
                 qualifier |= GTEncodingTypeQualifierInout;
                 type++;
             } break;
-             
+                
             case 'o':{
                 qualifier |= GTEncodingTypeQualifierOut;
                 type++;
@@ -120,12 +120,91 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
         if(name) {
             _name = [NSString stringWithUTF8String:name];
         }
+        GTEncodingType type = 0;
         unsigned int outCount = 0;
         objc_property_attribute_t *attributeList = property_copyAttributeList(property, &outCount);
         for(unsigned int i=0;i<outCount;i++) {
             objc_property_attribute_t attribute = attributeList[i];
-            NSLog(@"----->%s---->%s",attribute.name,attribute.value);
+            const char *attributeName = attribute.name;
+            const char *attributeValue = attribute.value;
+            NSLog(@"---%s--->%s",attributeName,attributeValue);
+            if(attributeName && strlen(attributeName)>0) {
+                switch (attributeName[0]) {
+                    case 'T': {
+                        //类型
+                        if(attributeValue) {
+                            _typeEncoding = [NSString stringWithUTF8String:attributeValue];
+                            type = GTEncodingGetType(attributeValue);
+                            if((type & GTEncodingTypeMask) == GTEncodingTypeObject) {
+                                //如果数据类为id 类型的时候
+                                NSScanner *scanner = [NSScanner scannerWithString:_typeEncoding];
+                                if(![scanner scanString:@"@\"" intoString:NULL]) {
+                                    continue;
+                                }
+                                NSString *className = nil;
+                                [scanner scanUpToString:@"<" intoString:&className];
+                                if(className) {
+                                    _cls = NSClassFromString(className);
+                                }
+                                NSMutableArray *ayProtocol = nil;
+                                while ([scanner scanString:@"<" intoString:NULL]) {
+                                    NSString *protocolName = nil;
+                                    [scanner scanUpToString:@">" intoString:&protocolName];
+                                    if(protocolName) {
+                                        if(!ayProtocol) {
+                                            ayProtocol = [[NSMutableArray alloc] init];
+                                        }
+                                        [ayProtocol addObject:protocolName];
+                                    }
+                                    [scanner scanString:@">" intoString:NULL];
+                                }
+                                _protocols = ayProtocol;
+                            }
+                            
+                        }
+                        break;
+                    }
+                    case 'R': type |= GTEncodingTypePropertyReadonly; break;
+                    case 'C': type |= GTEncodingTypePropertyCopy; break;
+                    case '&': type |= GTEncodingTypePropertyRetain; break;
+                    case 'N': type |= GTEncodingTypePropertyNonatomic; break;
+                    case 'D': type |= GTEncodingTypePropertyDynamic; break;
+                    case 'W': type |= GTEncodingTypePropertyWeak; break;
+                        
+                    case 'V': {
+                        //ivar 属性
+                        if(attributeValue) {
+                            _ivarName = [NSString stringWithUTF8String:attributeValue];
+                        }
+                        break;
+                    }
+                    case 'G': {
+                        //get 方法
+                        if(attributeValue) {
+                            _getter = NSSelectorFromString([NSString stringWithUTF8String:attributeValue]);
+                        }
+                        break;
+                    }
+                    case 'S': {
+                        //set 方法
+                        if(attributeValue) {
+                            _setter = NSSelectorFromString([NSString stringWithUTF8String:attributeValue]);
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
             
+        }
+        _type = type;
+        if(!_setter) {
+            NSString *setterSeletorName = [NSString stringWithFormat:@"set%@%@:",[[_name substringToIndex:1] uppercaseString],[_name substringFromIndex:1]];
+            _setter = NSSelectorFromString(setterSeletorName);
+        }
+        if(!_getter) {
+            _getter = NSSelectorFromString(_name);
         }
     }
     return self;
@@ -138,3 +217,4 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
 @implementation GTClassInfo
 
 @end
+
