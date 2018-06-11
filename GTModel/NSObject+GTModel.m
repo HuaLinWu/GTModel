@@ -7,7 +7,9 @@
 //
 
 #import "NSObject+GTModel.h"
-
+#import <objc/message.h>
+@interface NSObject()<GTModel>
+@end
 @implementation NSObject (GTModel)
 + (instancetype)gt_modelWithJson:(id)json {
     NSDictionary *dict = [self gt_dictionaryWithJson:json];
@@ -16,15 +18,22 @@
 + (instancetype)gt_modelWithDictionary:(NSDictionary *)dict {
     if(!dict) return nil;
     if(![dict isKindOfClass:[NSDictionary class]]) return nil;
-    id obj = [[self alloc] init];
+    //如果自定义的
+    Class cls = [self class];
+    if([cls respondsToSelector:@selector(modelCustomClassWithDictionary:)]) {
+        cls = [cls modelCustomClassWithDictionary:dict];
+    }
+    id obj = [[cls alloc] init];
     
     if([obj gt_modelSetWithDictionary:dict]) return obj;
     return nil;
 }
 #pragma mark private_method
+
 - (BOOL)gt_modelSetWithDictionary:(NSDictionary *)dict {
     return YES;
 }
+
 + (NSDictionary *)gt_dictionaryWithJson:(id)json {
     if(json) return nil;
     NSDictionary *jsonDict = nil;
