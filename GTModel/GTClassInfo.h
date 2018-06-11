@@ -98,8 +98,29 @@ typedef NS_OPTIONS(NSUInteger, GTEncodingType) {
 @end
 
 @interface GTMethodInfo : NSObject
+@property(nonatomic, assign, readonly)Method method;
+@property(nonatomic, copy, readonly) NSString *name;
+@property(nonatomic,assign, readonly)SEL seletor;
+@property(nonatomic,assign, readonly) IMP imp;
+@property(nonatomic, copy, readonly) NSString *returnTypeEncoding;
+@property(nonatomic, copy, readonly) NSString *typeEncoding;
+@property(nonatomic, copy, readonly) NSArray<NSString *> *argumentTypeEncodings;
+- (instancetype)initWithMethod:(Method)method;
 @end
 
 @interface GTClassInfo : NSObject
-
+@property(nonatomic,assign, readonly)Class cls;
+@property(nonatomic,assign, readonly)Class superClass;
+@property(nonatomic,assign,readonly) Class metaClass;
+@property(nonatomic,assign, readonly) BOOL isMetaClass;
+@property(nonatomic,assign, readonly) GTClassInfo  *superClassInfo;
+@property(nonatomic, assign, readonly) GTClassInfo *metaClassInfo;
+@property(nonatomic, copy, readonly) NSString *name;
+@property(nonatomic,copy,readonly) NSDictionary<NSString *,GTMethodInfo *> *methodInfoDict;
+@property(nonatomic,copy, readonly) NSDictionary<NSString *,GTPropertyInfo *> *propertyInfoDict;
+@property(nonatomic, copy, readonly) NSDictionary<NSString *,GTIVarInfo *> *ivarInfoDIct;
+- (void)setNeedUpdate;
+- (BOOL)needUpdate;
++ (instancetype)classInfoWithClass:(Class)cls;
++ (instancetype)classInfoWithClassName:(NSString *)className;
 @end

@@ -127,7 +127,6 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
             objc_property_attribute_t attribute = attributeList[i];
             const char *attributeName = attribute.name;
             const char *attributeValue = attribute.value;
-            NSLog(@"---%s--->%s",attributeName,attributeValue);
             if(attributeName && strlen(attributeName)>0) {
                 switch (attributeName[0]) {
                     case 'T': {
@@ -144,7 +143,7 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
                                 NSString *className = nil;
                                 [scanner scanUpToString:@"<" intoString:&className];
                                 if(className) {
-                                    _cls = NSClassFromString(className);
+                                    _cls = objc_getClass(className.UTF8String);
                                 }
                                 NSMutableArray *ayProtocol = nil;
                                 while ([scanner scanString:@"<" intoString:NULL]) {
@@ -198,6 +197,9 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
             }
             
         }
+        if(attributeList) {
+            free(attributeList);
+        }
         _type = type;
         if(!_setter) {
             NSString *setterSeletorName = [NSString stringWithFormat:@"set%@%@:",[[_name substringToIndex:1] uppercaseString],[_name substringFromIndex:1]];
@@ -212,9 +214,72 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
 @end
 
 @implementation  GTMethodInfo
+- (instancetype)initWithMethod:(Method)method {
+    if(!method) return nil;
+    self = [super init];
+    _method = method;
+    _seletor = method_getName(method);
+    _imp = method_getImplementation(method);
+    const char *name = sel_getName(_seletor);
+    _name = [NSString stringWithUTF8String:name];
+     char *returnType = (char *)method_copyReturnType(method);
+    if(returnType) {
+        _returnTypeEncoding = [NSString stringWithUTF8String:returnType];
+        free(returnType);
+    }
+    char *typeEncoding = (char *)method_getTypeEncoding(method);
+    if(typeEncoding) {
+        _typeEncoding = [NSString stringWithUTF8String:typeEncoding];
+        free(typeEncoding);
+    }
+    int numberOfArguments = method_getNumberOfArguments(method);
+    NSMutableArray *ayArgumentTypeEncodings = nil;
+    for(int i=0;i<numberOfArguments;i++) {
+       char *argumentType = method_copyArgumentType(method, i);
+        if(!ayArgumentTypeEncodings) {
+            ayArgumentTypeEncodings = [[NSMutableArray alloc] init];
+        }
+        NSString *strArgumentType =argumentType?[NSString stringWithUTF8String:argumentType]:@"";
+        if(strArgumentType) {
+            [ayArgumentTypeEncodings addObject:strArgumentType];
+        }
+        if(argumentType) {
+            free(argumentType);
+        }
+        
+    }
+    _argumentTypeEncodings = ayArgumentTypeEncodings;
+    
+    return self;
+}
 @end
-
+@interface GTClassInfo()
+{
+    BOOL _needUpdate;
+}
+@end
 @implementation GTClassInfo
-
+- (void)setNeedUpdate {
+    _needUpdate = YES;
+}
+- (BOOL)needUpdate {
+    return _needUpdate;
+}
++ (instancetype)classInfoWithClass:(Class)cls {
+    return [[self alloc] initWithClass:cls];
+}
++ (instancetype)classInfoWithClassName:(NSString *)className {
+    if(!className) return nil;
+    Class cls = objc_getClass(className.UTF8String);
+    return [self classInfoWithClass:cls];
+}
+#pragma mark private_method
+- (instancetype)initWithClass:(Class)cls {
+    if(!cls) return nil;
+    self = [super init];
+    _cls = cls;
+    
+    return self;
+}
 @end
 

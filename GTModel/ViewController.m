@@ -21,6 +21,7 @@
     for(int i=0;i <outCount ;i++) {
         objc_property_t property = propertyList[i];
         GTPropertyInfo *propertyInfo = [[GTPropertyInfo alloc] initWithProperty:property];
+        
     }
 }
 
