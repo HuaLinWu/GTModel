@@ -266,7 +266,24 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
     return _needUpdate;
 }
 + (instancetype)classInfoWithClass:(Class)cls {
-    return [[self alloc] initWithClass:cls];
+    static dispatch_once_t onceToken;
+    static CFMutableDictionaryRef classCache;
+    static CFMutableDictionaryRef metaClassCache;
+    dispatch_once(&onceToken, ^{
+        classCache = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        metaClassCache = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    });
+    CFMutableDictionaryRef cache = class_isMetaClass(cls)?metaClassCache:classCache;
+   GTClassInfo *classInfo = CFDictionaryGetValue(cache, (__bridge const void *)(cls));
+    if(!classInfo) {
+        classInfo = [[self alloc] initWithClass:cls];
+        CFDictionarySetValue(cache, (__bridge const void *)(cls), (__bridge const void *)(classInfo));
+        [classInfo setNeedUpdate];
+    }
+    if(classInfo->_needUpdate) {
+        [classInfo _update];
+    }
+    return classInfo;
 }
 + (instancetype)classInfoWithClassName:(NSString *)className {
     if(!className) return nil;
@@ -278,8 +295,69 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
     if(!cls) return nil;
     self = [super init];
     _cls = cls;
-    
+    const char *name = class_getName(cls);
+    _isMetaClass = class_isMetaClass(cls);
+    _superClass = class_getSuperclass(cls);
+    if(name) {
+        _name = [NSString stringWithUTF8String:name];
+        if(!_isMetaClass) {
+            _metaClass = objc_getMetaClass(name);
+        }
+    }
+    _superClassInfo = [self.class classInfoWithClass:_superClass];
     return self;
+}
+- (void)_update {
+    _propertyInfoDict = nil;
+    _ivarInfoDict = nil;
+    _methodInfoDict = nil;
+    unsigned int outCount;
+     //properyList 的生成property 到集合
+    objc_property_t *propertyList = class_copyPropertyList(_cls, &outCount);
+    if(propertyList) {
+       
+        NSMutableDictionary *propertyInfoDict =  [[NSMutableDictionary alloc] init];
+        _propertyInfoDict = [propertyInfoDict copy];
+        
+        for(int i=0;i<outCount;i++) {
+            objc_property_t property = propertyList[i];
+            GTPropertyInfo *propertyInfo = [[GTPropertyInfo alloc] initWithProperty:property];
+            if(propertyInfo) {
+                [propertyInfoDict setValue:propertyInfo forKey:propertyInfo.name];
+            }
+        }
+        free(propertyList);
+    }
+    //ivarlist 生成ivar 的集合
+    NSMutableDictionary *ivarsDict = [[NSMutableDictionary alloc] init];
+    Ivar *ivarList = class_copyIvarList(_cls, &outCount);
+    if(ivarList) {
+        for(int i=0;i<outCount;i++) {
+            Ivar ivar = ivarList[i];
+            GTIVarInfo *ivarInfo = [[GTIVarInfo alloc] initWithIvar:ivar];
+            if(ivarInfo) {
+                [ivarsDict setObject:ivarInfo forKey:ivarInfo.name];
+            }
+           
+        }
+        _ivarInfoDict = [ivarsDict copy];
+        free(ivarList);
+    }
+    //methodList 集合转化成 GTMethodInfo 的集合
+    NSMutableDictionary *methodsDict = [[NSMutableDictionary alloc] init];
+   Method *methodList = class_copyMethodList(_cls, &outCount);
+    if(methodList) {
+        for(int i=0;i<outCount;i++) {
+            Method method = methodList[i];
+            GTMethodInfo *methodInfo = [[GTMethodInfo alloc] initWithMethod:method];
+            if(method) {
+                [methodsDict setObject:methodInfo forKey:methodInfo.name];
+            }
+        }
+        _methodInfoDict = [methodsDict copy];
+        free(methodList);
+    }
+    
 }
 @end
 

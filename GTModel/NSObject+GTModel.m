@@ -24,13 +24,17 @@
         cls = [cls modelCustomClassWithDictionary:dict];
     }
     id obj = [[cls alloc] init];
-    
+    //预先处理Dict
+    if([obj respondsToSelector:@selector(modelCustomWillTransformFromDictionary:)]) {
+        dict = [obj modelCustomWillTransformFromDictionary:dict];
+    }
     if([obj gt_modelSetWithDictionary:dict]) return obj;
     return nil;
 }
 #pragma mark private_method
 
 - (BOOL)gt_modelSetWithDictionary:(NSDictionary *)dict {
+    
     return YES;
 }
 

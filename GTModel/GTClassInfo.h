@@ -64,11 +64,11 @@ typedef NS_OPTIONS(NSUInteger, GTEncodingType) {
 
 @property(nonatomic, assign, readonly) Ivar ivar;
 
-@property(nonatomic, copy, readonly) NSString *name;
+@property(nonatomic, strong, readonly) NSString *name;
 
 @property(nonatomic, assign, readonly) ptrdiff_t offset;
 
-@property(nonatomic, copy, readonly) NSString *typeEncoding;
+@property(nonatomic, strong, readonly) NSString *typeEncoding;
 
 @property(nonatomic, assign, readonly) GTEncodingType type;
 
@@ -79,17 +79,17 @@ typedef NS_OPTIONS(NSUInteger, GTEncodingType) {
 
 @property(nonatomic, assign, readonly) objc_property_t property;
 
-@property(nonatomic, copy, readonly) NSString *name;
+@property(nonatomic, strong, readonly) NSString *name;
 
 @property(nonatomic, assign,readonly) GTEncodingType type;
 
-@property(nonatomic, copy, readonly) NSString *typeEncoding;
+@property(nonatomic, strong, readonly) NSString *typeEncoding;
 
-@property(nonatomic, copy, readonly) NSString *ivarName;
+@property(nonatomic, strong, readonly) NSString *ivarName;
 
 @property(nonatomic, assign, readonly) Class cls;
 
-@property(nonatomic, copy, readonly) NSArray<NSString *> *protocols;
+@property(nonatomic, strong, readonly) NSArray<NSString *> *protocols;
 
 @property(nonatomic, assign, readonly) SEL getter;
 
@@ -99,12 +99,12 @@ typedef NS_OPTIONS(NSUInteger, GTEncodingType) {
 
 @interface GTMethodInfo : NSObject
 @property(nonatomic, assign, readonly)Method method;
-@property(nonatomic, copy, readonly) NSString *name;
+@property(nonatomic, strong, readonly) NSString *name;
 @property(nonatomic,assign, readonly)SEL seletor;
 @property(nonatomic,assign, readonly) IMP imp;
-@property(nonatomic, copy, readonly) NSString *returnTypeEncoding;
-@property(nonatomic, copy, readonly) NSString *typeEncoding;
-@property(nonatomic, copy, readonly) NSArray<NSString *> *argumentTypeEncodings;
+@property(nonatomic, strong, readonly) NSString *returnTypeEncoding;
+@property(nonatomic, strong, readonly) NSString *typeEncoding;
+@property(nonatomic, strong, readonly) NSArray<NSString *> *argumentTypeEncodings;
 - (instancetype)initWithMethod:(Method)method;
 @end
 
@@ -114,11 +114,10 @@ typedef NS_OPTIONS(NSUInteger, GTEncodingType) {
 @property(nonatomic,assign,readonly) Class metaClass;
 @property(nonatomic,assign, readonly) BOOL isMetaClass;
 @property(nonatomic,assign, readonly) GTClassInfo  *superClassInfo;
-@property(nonatomic, assign, readonly) GTClassInfo *metaClassInfo;
-@property(nonatomic, copy, readonly) NSString *name;
-@property(nonatomic,copy,readonly) NSDictionary<NSString *,GTMethodInfo *> *methodInfoDict;
-@property(nonatomic,copy, readonly) NSDictionary<NSString *,GTPropertyInfo *> *propertyInfoDict;
-@property(nonatomic, copy, readonly) NSDictionary<NSString *,GTIVarInfo *> *ivarInfoDIct;
+@property(nonatomic, strong, readonly) NSString *name;
+@property(nonatomic,strong,readonly) NSDictionary<NSString *,GTMethodInfo *> *methodInfoDict;
+@property(nonatomic,strong, readonly) NSDictionary<NSString *,GTPropertyInfo *> *propertyInfoDict;
+@property(nonatomic, strong, readonly) NSDictionary<NSString *,GTIVarInfo *> *ivarInfoDict;
 - (void)setNeedUpdate;
 - (BOOL)needUpdate;
 + (instancetype)classInfoWithClass:(Class)cls;

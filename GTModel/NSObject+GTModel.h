@@ -16,7 +16,7 @@
 @optional
 
 /**
- 用户根据dictionary 自定义的model 的class
+ 用户根据dictionary 自定义的model 的class（主要针对的是工厂模式，或者基类）
 
  @param dictionary 待转化的 dictionary
  @return 需要转化的目标model 的class
