@@ -114,11 +114,10 @@ typedef NS_OPTIONS(NSUInteger, GTEncodingType) {
 @property(nonatomic,assign,readonly) Class metaClass;
 @property(nonatomic,assign, readonly) BOOL isMetaClass;
 @property(nonatomic,assign, readonly) GTClassInfo  *superClassInfo;
-@property(nonatomic, assign, readonly) GTClassInfo *metaClassInfo;
 @property(nonatomic, copy, readonly) NSString *name;
 @property(nonatomic,copy,readonly) NSDictionary<NSString *,GTMethodInfo *> *methodInfoDict;
 @property(nonatomic,copy, readonly) NSDictionary<NSString *,GTPropertyInfo *> *propertyInfoDict;
-@property(nonatomic, copy, readonly) NSDictionary<NSString *,GTIVarInfo *> *ivarInfoDIct;
+@property(nonatomic, copy, readonly) NSDictionary<NSString *,GTIVarInfo *> *ivarInfoDict;
 - (void)setNeedUpdate;
 - (BOOL)needUpdate;
 + (instancetype)classInfoWithClass:(Class)cls;

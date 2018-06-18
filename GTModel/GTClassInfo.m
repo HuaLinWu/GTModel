@@ -266,7 +266,34 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
     return _needUpdate;
 }
 + (instancetype)classInfoWithClass:(Class)cls {
-    return [[self alloc] initWithClass:cls];
+    if(!cls) return nil;
+    static dispatch_once_t onceToken;
+    static CFMutableDictionaryRef classCache;
+    static CFMutableDictionaryRef metaClassCache;
+    static dispatch_semaphore_t semaphore;
+    dispatch_once(&onceToken, ^{
+        classCache = CFDictionaryCreateMutable(kCFAllocatorSystemDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        metaClassCache = CFDictionaryCreateMutable(kCFAllocatorSystemDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+       semaphore= dispatch_semaphore_create(1);
+    });
+    
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    CFMutableDictionaryRef cache = class_isMetaClass(cls)?metaClassCache:classCache;
+   GTClassInfo *classInfo = CFDictionaryGetValue(cache, (__bridge const void *)(cls));
+    if(classInfo && classInfo.needUpdate) {
+        [classInfo _update];
+    }
+     dispatch_semaphore_signal(semaphore);
+    if(!classInfo) {
+         classInfo = [[self alloc] initWithClass:cls];
+        if(classInfo) {
+            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+            CFDictionarySetValue(cache, (__bridge const void *)(cls), (__bridge const void *)(classInfo));
+            dispatch_semaphore_signal(semaphore);
+        }
+    }
+  
+    return classInfo;
 }
 + (instancetype)classInfoWithClassName:(NSString *)className {
     if(!className) return nil;
@@ -278,8 +305,51 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
     if(!cls) return nil;
     self = [super init];
     _cls = cls;
-    
+    _isMetaClass = class_isMetaClass(cls);
+  
+    _superClass = class_getSuperclass(cls);
+    _name = [NSString stringWithUTF8String:class_getName(cls)];
+    if(!_isMetaClass) {
+        _metaClass = objc_getMetaClass(class_getName(cls));
+    }
+    [self _update];
+    _superClassInfo = [[self class] classInfoWithClass:_superClass];
     return self;
+}
+- (void)_update {
+    unsigned int outCount;
+    //property
+   NSMutableDictionary *propertyDict = [[NSMutableDictionary alloc] init];
+   objc_property_t *propertyList = class_copyPropertyList(self.class, &outCount);
+    
+    for(int i=0;i<outCount;i++) {
+        objc_property_t property = propertyList[i];
+        GTPropertyInfo *propertyInfo = [[GTPropertyInfo alloc] initWithProperty:property];
+        [propertyDict setObject:propertyInfo forKey:propertyInfo.name];
+    }
+    _propertyInfoDict = propertyDict;
+    free(propertyList);
+    //Ivar
+    NSMutableDictionary *ivarDict = [[NSMutableDictionary alloc] init];
+    Ivar *ivarList = class_copyIvarList(self.class, &outCount);
+    for(int i=0;i<outCount;i++) {
+        Ivar ivar = ivarList[i];
+        GTIVarInfo *ivarInfo = [[GTIVarInfo alloc] initWithIvar:ivar];
+        [ivarDict setObject:ivarInfo forKey:ivarInfo.name];
+    }
+    _ivarInfoDict = ivarDict;
+     free(ivarList);
+    //method
+    NSMutableDictionary *methodDict = [[NSMutableDictionary alloc] init];
+    Method *methodList = class_copyMethodList(self.class, &outCount);
+    for(int i=0;i<outCount;i++) {
+        Method method = methodList[i];
+        GTMethodInfo *methodInfo = [[GTMethodInfo alloc] initWithMethod:method];
+        [methodDict setObject:methodInfo forKey:methodInfo.name];
+    }
+    _methodInfoDict = methodDict;
+    free(methodList);
+   
 }
 @end
 

@@ -9,7 +9,8 @@
 #import <Foundation/Foundation.h>
 
 @interface NSObject (GTModel)
-+ (instancetype)gt_modelWithJson:(id)json;
+
+
 @end
 
 @protocol GTModel <NSObject>
