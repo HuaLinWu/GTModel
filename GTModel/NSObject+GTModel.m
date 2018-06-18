@@ -31,6 +31,7 @@
     id model = [[cls alloc] init];
     [model gt_modelSetWithDictionary:dicationary];
     return model;
+
 }
 
 #pragma mark private_method

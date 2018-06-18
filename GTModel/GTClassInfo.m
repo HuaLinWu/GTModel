@@ -292,7 +292,6 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
             dispatch_semaphore_signal(semaphore);
         }
     }
-  
     return classInfo;
 }
 + (instancetype)classInfoWithClassName:(NSString *)className {
@@ -349,7 +348,6 @@ GTEncodingType GTEncodingGetType(const char *typeEncoding) {
     }
     _methodInfoDict = methodDict;
     free(methodList);
-   
 }
 @end
 

@@ -99,7 +99,7 @@ typedef NS_OPTIONS(NSUInteger, GTEncodingType) {
 
 @interface GTMethodInfo : NSObject
 @property(nonatomic, assign, readonly)Method method;
-@property(nonatomic, copy, readonly) NSString *name;
+@property(nonatomic, strong, readonly) NSString *name;
 @property(nonatomic,assign, readonly)SEL seletor;
 @property(nonatomic,assign, readonly) IMP imp;
 @property(nonatomic, strong, readonly) NSString *returnTypeEncoding;
